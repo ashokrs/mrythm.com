@@ -39,7 +39,7 @@
     
     .layout-container {
       display: flex;
-      width: 100vw;
+      width: 100%;
       height: 100vh;
     }
     
@@ -548,6 +548,10 @@
         display: none !important;
       }
       
+      .stars::after {
+        display: none; /* Prevent horizontal gutter extending */
+      }
+      
       .rhs {
         flex: none;
         width: 100%;
@@ -555,14 +559,15 @@
         min-height: 600px;
         overflow: hidden;
         border-left: none;
+        position: relative; /* Contain absolute overlay */
       }
       
       .content-container {
-        position: fixed;
+        position: absolute;
         top: 0;
         left: 0;
-        width: 100vw;
-        height: 100vh;
+        width: 100%;
+        height: 100%;
         z-index: 1000;
         padding: 2rem;
       }
