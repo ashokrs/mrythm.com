@@ -190,7 +190,7 @@
       flex: 1;
       position: relative;
       background-color: var(--color-bg-right);
-      border-left: 1px solid var(--color-line);
+      border-left: none; /* Removed the divider between LHS and RHS */
       overflow: hidden;
     }
     
@@ -345,23 +345,63 @@
     }
     
     .back-btn {
-      background: none;
-      border: 1px solid var(--color-text-dark);
+      position: relative;
+      background: var(--color-bg-right);
+      border: 1px solid var(--color-line);
       border-radius: 50px;
-      padding: 0.5rem 1.5rem;
+      height: 46px;
       font-family: inherit;
-      font-weight: 500;
-      font-size: 1rem;
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      transition: all 0.2s ease;
+      padding: 0;
+      width: 46px; /* Starts as a perfect circle */
+      transition: width 0.4s cubic-bezier(0.77, 0, 0.175, 1), background-color 0.4s, border-color 0.4s;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    }
+
+    .back-btn:hover {
+      width: 125px; /* Expands into pill */
+      background: var(--color-text-dark);
+      border-color: var(--color-text-dark);
     }
     
-    .back-btn:hover {
-      background: var(--color-text-dark);
+    .back-btn-inner {
+      display: flex;
+      align-items: center;
+      width: 125px;
+      height: 100%;
+    }
+
+    .back-icon-box {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-text-dark);
+      transition: color 0.4s;
+    }
+
+    .back-btn:hover .back-icon-box {
       color: var(--color-white);
+    }
+
+    .back-text {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--color-white);
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(10px);
+      transition: opacity 0.3s ease 0.1s, transform 0.3s ease 0.1s;
+    }
+
+    .back-btn:hover .back-text {
+      opacity: 1;
+      transform: translateX(0);
     }
     
     .content-body {
@@ -522,7 +562,26 @@
         
         <div class="anchor-point" style="bottom: 100%; right: 70px;"></div>
         <div class="anchor-point" style="top: 0px; right: auto; left: 160px;"></div>
+        
+        <!-- Intersection point on the border for footer grid -->
+        <div class="anchor-point" style="top: -2px; right: -2px;"></div>
       </div>
+      
+      <!-- Border intersection points for other horizontal lines -->
+      <!-- Radar center axis intersection -->
+      <div class="anchor-point" style="position: absolute; top: 50%; right: -2px; transform: translateY(-50%);"></div>
+      
+      <!-- Semicircle 1 intersections (5vw radius) -->
+      <div class="anchor-point" style="position: absolute; top: calc(50% - 5vw); right: -2px; transform: translateY(-50%);"></div>
+      <div class="anchor-point" style="position: absolute; top: calc(50% + 5vw); right: -2px; transform: translateY(-50%);"></div>
+      
+      <!-- Semicircle 2 intersections (12.5vw radius) -->
+      <div class="anchor-point" style="position: absolute; top: calc(50% - 12.5vw); right: -2px; transform: translateY(-50%);"></div>
+      <div class="anchor-point" style="position: absolute; top: calc(50% + 12.5vw); right: -2px; transform: translateY(-50%);"></div>
+      
+      <!-- Semicircle 3 intersections (22.5vw radius) -->
+      <div class="anchor-point" style="position: absolute; top: calc(50% - 22.5vw); right: -2px; transform: translateY(-50%);"></div>
+      <div class="anchor-point" style="position: absolute; top: calc(50% + 22.5vw); right: -2px; transform: translateY(-50%);"></div>
     </div>
     
     <!-- RIGHT SIDE -->
@@ -580,8 +639,12 @@
         <div class="content-header">
           <div style="width:100px;"></div> <!-- spacer -->
           <button class="back-btn" onclick="closePanel()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-            Back
+            <div class="back-btn-inner">
+              <div class="back-icon-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+              </div>
+              <span class="back-text">Go Back</span>
+            </div>
           </button>
         </div>
         
