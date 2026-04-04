@@ -514,24 +514,105 @@
     }
 
     @media (max-width: 1024px) {
+      body {
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+      
       .layout-container {
         flex-direction: column;
+        height: auto;
+        min-height: 100vh;
       }
+      
       .lhs {
-        flex: auto;
-        min-height: 40vh;
+        flex: none;
+        width: 100%;
         max-width: none;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        height: auto;
+        padding: 2rem 2rem 2.5rem 2rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05); /* separate from radar */
       }
+      
+      .footer-grid {
+        margin-right: 0; /* Remove extreme right extension */
+      }
+      
+      .footer-right {
+        padding-right: 1.5rem; /* Recoup standard padding */
+      }
+      
+      /* Hide anchor points that depended on the vertical divider */
+      .footer-grid > .anchor-point, 
+      .footer-grid .anchor-point[style*="right: -3px"] {
+        display: none !important;
+      }
+      
       .rhs {
-        flex: 1;
+        flex: none;
+        width: 100%;
+        height: 600px;
+        min-height: 600px;
+        overflow: hidden;
         border-left: none;
       }
-      .rada-y-axis {
-        left: 50%;
-      }
+      
       .content-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 1000;
         padding: 2rem;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .footer-grid {
+        flex-direction: column;
+      }
+      
+      .footer-left {
+        border-right: none;
+        border-bottom: 1px solid var(--color-line);
+      }
+      
+      .footer-left-top {
+        flex-direction: column;
+      }
+      
+      .grid-col.product-col {
+        border-right: none;
+        border-bottom: 1px solid var(--color-line);
+        padding-right: 0;
+      }
+      
+      .grid-col.available-col {
+        padding-left: 0;
+        padding-right: 0;
+      }
+      
+      .footer-right {
+        padding-left: 0;
+        padding-right: 0;
+        padding-top: 1.5rem;
+        align-items: flex-start;
+      }
+      
+      .footer-right .grid-value {
+        width: 100%;
+        text-align: left !important;
+        margin: 1.5rem 0 !important;
+      }
+      
+      .future-state {
+        text-align: left !important;
+      }
+      
+      /* Hide all complex grid intersection points on strictly mobile stack */
+      .anchor-point {
+        display: none !important;
       }
     }
   </style>
