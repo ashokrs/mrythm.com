@@ -58,7 +58,49 @@
     }
     
     .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
       margin-bottom: 2rem;
+    }
+    
+    .header-left {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .mobile-nav {
+      display: none;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+    
+    .mobile-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+    
+    .mobile-nav-item:hover {
+      opacity: 1;
+    }
+    
+    .mobile-nav-item img {
+      width: 24px;
+      height: 24px;
+      object-fit: contain;
+      margin-bottom: 0.25rem;
+    }
+    
+    .mobile-nav-item span {
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: var(--color-text-muted);
+      text-transform: lowercase;
+      white-space: nowrap;
     }
     
     .logo {
@@ -513,7 +555,7 @@
       border-color: var(--color-text-dark);
     }
 
-    @media (max-width: 1024px) {
+    @media (max-width: 767px) {
       body {
         overflow-y: auto;
         overflow-x: hidden;
@@ -523,6 +565,10 @@
         flex-direction: column;
         height: auto;
         min-height: 100vh;
+      }
+      
+      .mobile-nav {
+        display: flex; /* Show mobile nav on phones */
       }
       
       .lhs {
@@ -571,9 +617,8 @@
         z-index: 1000;
         padding: 2rem;
       }
-    }
     
-    @media (max-width: 768px) {
+
       .footer-grid {
         flex-direction: column;
       }
@@ -629,11 +674,28 @@
     <!-- LEFT SIDE -->
     <div class="lhs">
       <div class="header">
-        <div class="logo">mrythm</div>
-        <div class="stars">
-          <span class="star">★</span>
-          <span class="star">★</span>
-          <span class="star">★</span>
+        <div class="header-left">
+          <div class="logo">mrythm</div>
+          <div class="stars">
+            <span class="star">★</span>
+            <span class="star">★</span>
+            <span class="star">★</span>
+          </div>
+        </div>
+        
+        <div class="mobile-nav">
+          <div class="mobile-nav-item" onclick="openPanel('who')">
+            <img src="i/icon-who-we-are.png" alt="Who we are" />
+            <span>who we are</span>
+          </div>
+          <div class="mobile-nav-item" onclick="openPanel('product')">
+            <img src="i/icon-product.png" alt="Product" />
+            <span>product</span>
+          </div>
+          <div class="mobile-nav-item" onclick="openPanel('contact')">
+            <img src="i/icon-contact-us.png" alt="Contact us" />
+            <span>contact us</span>
+          </div>
         </div>
       </div>
       
@@ -855,11 +917,20 @@
       // Animation states
       radarView.classList.add('hidden');
       contentView.classList.add('active');
+      
+      if (window.innerWidth <= 767) {
+        document.querySelector('.rhs').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => {
+          document.body.style.overflow = 'hidden'; // Lock background scrolling after scroll completes
+        }, 500); 
+      }
     }
     
     function closePanel() {
       radarView.classList.remove('hidden');
       contentView.classList.remove('active');
+      
+      document.body.style.overflow = ''; // Unlock background scrolling
     }
   </script>
 </body>
