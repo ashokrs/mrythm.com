@@ -1004,8 +1004,16 @@
       contentView.classList.add('active');
       
       if (window.innerWidth <= 767) {
-        document.querySelector('.rhs').scrollIntoView({ block: 'start' });
-        document.body.style.overflow = 'hidden'; 
+        // Give the DOM a tick to render the panel before scrolling
+        requestAnimationFrame(() => {
+          const rhs = document.querySelector('.rhs');
+          const rhsTop = rhs.getBoundingClientRect().top + window.scrollY;
+          window.scrollTo({ top: rhsTop, behavior: 'smooth' });
+          // Lock scroll only after smooth scroll finishes (~400ms)
+          setTimeout(() => {
+            document.body.style.overflow = 'hidden';
+          }, 450);
+        });
       }
     }
     
