@@ -590,7 +590,14 @@
         max-width: none;
         height: auto;
         padding: 0.75rem 2rem 2.5rem 2rem;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.05); /* separate from radar */
+      }
+      
+      .main-hero h1 {
+        margin-top: -3mm;
+      }
+      
+      .main-hero p {
+        margin-top: -3mm;
       }
       
       .footer-grid {
@@ -689,6 +696,20 @@
         color: var(--color-text-dark);
         line-height: 1.4;
       }
+      
+      .mobile-anchor {
+        display: block !important;
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background-color: var(--color-accent);
+        right: -2px;
+        z-index: 20;
+      }
+    }
+    
+    .mobile-anchor {
+      display: none;
     }
   </style>
 </head>
@@ -737,16 +758,18 @@
         <h1>We build software that computes what<br>others approximate.</h1>
         <p>Deterministic, science-based systems for industrial decision making under real-world constraints.</p>
       </div>
-       <div class="footer-grid">
+       <div class="footer-grid" style="position: relative;">
         <!-- TOP-RIGHT grid square touching the RHS background border -->
         <div class="anchor-point" style="top: -2px; right: -3px; z-index: 20;"></div>
+        <!-- Mobile explicit top line cap -->
+        <div class="mobile-anchor" style="top: -2px;"></div>
         
         <!-- LEFT SIDE BLOCK -->
-        <div class="footer-left">
+        <div class="footer-left" style="position: relative;">
           
           <div class="footer-left-top">
             
-            <div class="grid-col product-col">
+            <div class="grid-col product-col" style="position: relative;">
               <div class="grid-label">product</div>
               <div class="grid-value">Power<span style="font-weight: 500;">CONCRETE</span></div>
               
@@ -754,6 +777,9 @@
               <div class="mobile-subtext" style="display: none;">
                 Deterministic optimization for precast concrete mix design.
               </div>
+              
+              <!-- Mobile cap for product-col border -->
+              <div class="mobile-anchor" style="bottom: -2px;"></div>
               
               <!-- First intersection on top border and product col right edge -->
               <div class="anchor-point" style="top: -2px; right: -2px; z-index: 20;"></div>
@@ -776,6 +802,9 @@
           <div class="subtext desktop-subtext">
             Deterministic optimization for precast concrete mix design.
           </div>
+          
+          <!-- Mobile cap for footer-left border -->
+          <div class="mobile-anchor" style="bottom: -2px;"></div>
         </div>
         
         <!-- RIGHT SIDE BLOCK -->
