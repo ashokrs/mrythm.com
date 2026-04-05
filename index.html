@@ -107,9 +107,23 @@
       font-size: 2.2rem;
       font-weight: 500;
       letter-spacing: -0.05em;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.25rem;
     }
     
+    .brand-underscore {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      position: relative;
+    }
+    
+    .brand-line {
+      flex: 1;
+      height: 1px;
+      background-color: var(--color-line); /* Thin gray line */
+    }
+    
+    /* Intentionally keeping stars css intact in case they are un-commented */
     .stars {
       display: flex;
       gap: 0.3rem;
@@ -676,11 +690,20 @@
       <div class="header">
         <div class="header-left">
           <div class="logo">mrythm</div>
+          
+          <!--
           <div class="stars">
             <span class="star">★</span>
             <span class="star">★</span>
             <span class="star">★</span>
           </div>
+          -->
+          
+          <div class="brand-underscore">
+            <div class="brand-line"></div>
+            <div class="anchor-point" style="position: relative; top: 0; right: 0;"></div>
+          </div>
+          
         </div>
         
         <div class="mobile-nav">
@@ -714,7 +737,7 @@
             
             <div class="grid-col product-col">
               <div class="grid-label">product</div>
-              <div class="grid-value">power<span style="font-weight: 500;">CONCRETE</span></div>
+              <div class="grid-value">Power<span style="font-weight: 500;">CONCRETE</span></div>
               
               <!-- First intersection on top border and product col right edge -->
               <div class="anchor-point" style="top: -2px; right: -2px; z-index: 20;"></div>
