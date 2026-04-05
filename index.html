@@ -610,7 +610,8 @@
       
       /* Hide anchor points that depended on the vertical divider */
       .footer-grid > .anchor-point, 
-      .footer-grid .anchor-point[style*="right: -3px"] {
+      .footer-grid .anchor-point[style*="right: -3px"],
+      .lhs > .anchor-point {
         display: none !important;
       }
       
@@ -626,6 +627,7 @@
         overflow: hidden;
         border-left: none;
         position: relative; /* Contain absolute overlay */
+        margin-top: -3mm; /* Lift bottom panel up */
       }
       
       .content-container {
