@@ -627,7 +627,7 @@
         overflow: hidden;
         border-left: none;
         position: relative; /* Contain absolute overlay */
-        margin-top: -8mm; /* Lift bottom panel up */
+        top: -8mm; /* Force explicit lift immune to margin collapse */
       }
       
       .content-container {
@@ -989,10 +989,8 @@
       contentView.classList.add('active');
       
       if (window.innerWidth <= 767) {
-        document.querySelector('.rhs').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        setTimeout(() => {
-          document.body.style.overflow = 'hidden'; // Lock background scrolling after scroll completes
-        }, 500); 
+        document.querySelector('.rhs').scrollIntoView({ block: 'start' });
+        document.body.style.overflow = 'hidden'; 
       }
     }
     
