@@ -674,9 +674,21 @@
         text-align: left !important;
       }
       
-      /* Hide all complex grid intersection points on strictly mobile stack */
-      .anchor-point {
+      /* Hide complex grid intersection points on strictly mobile stack, preserving logo anchor */
+      .footer-grid .anchor-point {
         display: none !important;
+      }
+      
+      .desktop-subtext {
+        display: none !important;
+      }
+      
+      .mobile-subtext {
+        display: block !important;
+        padding: 1rem 1.5rem 0 0;
+        font-size: 1.15rem;
+        color: var(--color-text-dark);
+        line-height: 1.4;
       }
     }
   </style>
@@ -739,6 +751,11 @@
               <div class="grid-label">product</div>
               <div class="grid-value">Power<span style="font-weight: 500;">CONCRETE</span></div>
               
+              <!-- Mobile subtext rendering right below PowerCONCRETE -->
+              <div class="mobile-subtext" style="display: none;">
+                Deterministic optimization for precast concrete mix design.
+              </div>
+              
               <!-- First intersection on top border and product col right edge -->
               <div class="anchor-point" style="top: -2px; right: -2px; z-index: 20;"></div>
               <!-- Intersection on inner border and product col right edge -->
@@ -757,7 +774,7 @@
             <div class="anchor-point" style="bottom: -2px; right: -2px; z-index: 20;"></div>
           </div>
           
-          <div class="subtext">
+          <div class="subtext desktop-subtext">
             Deterministic optimization for precast concrete mix design.
           </div>
         </div>
