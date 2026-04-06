@@ -831,7 +831,7 @@
         <div class="footer-right">
           <div class="grid-label">methodology</div>
           <div class="grid-value" style="font-size: 1.2rem; font-weight: 600; text-align: center; margin: auto 0; line-height: 1.2;">Compute the feasible space</div>
-          <div class="future-state" style="text-align: center; line-height: 1.4; padding-top: 0.5rem; max-width: 240px;">* replace heuristics with deterministic model-based decisions *</div>
+          <div class="future-state" style="text-align: center; line-height: 1.4; padding-top: 0.5rem; max-width: 240px;">* replace heuristics with computed solutions *</div>
         </div>
       </div>
       
@@ -962,24 +962,43 @@
             <p>Connect with the Mrythm team to discuss deterministic optimization for your industrial systems.</p>
             <br/>
             
-            <form action="mailto:hello@mrythm.com" method="post" enctype="text/plain">
+            <form id="contact-form" action="https://api.web3forms.com/submit" method="POST">
+
+              <!-- Web3Forms access key -->
+              <input type="hidden" name="access_key" value="2c6e6c36-828f-4fdc-8f63-6ccdb3806382">
+              <!-- Redirect to same page after submit (prevents redirect) -->
+              <input type="hidden" name="redirect" value="false">
+              <!-- Subject line in received email -->
+              <input type="hidden" name="subject" value="New enquiry from mrythm.com">
+              <!-- Honeypot spam trap — bots fill this, humans don't -->
+              <input type="checkbox" name="botcheck" class="hidden" style="display:none;">
+
               <div class="form-group">
                 <label>Name</label>
-                <input type="text" placeholder="Your name" required>
+                <input type="text" name="name" placeholder="Your name" required>
               </div>
               <div class="form-group">
                 <label>Email</label>
-                <input type="email" placeholder="Your email address" required>
+                <input type="email" name="email" placeholder="Your email address" required>
               </div>
               <div class="form-group">
                 <label>Subject</label>
-                <input type="text" placeholder="Subject" required>
+                <input type="text" name="subject_line" placeholder="Subject" required>
               </div>
               <div class="form-group">
                 <label>Message</label>
-                <textarea rows="5" placeholder="How can we help?" required></textarea>
+                <textarea name="message" rows="4" placeholder="How can we help?" required></textarea>
               </div>
-              <button type="submit" class="btn-action" style="border:none; cursor:pointer;">Send Message</button>
+
+              <!-- hCaptcha widget (Web3Forms built-in CAPTCHA) -->
+              <div class="h-captcha" data-captcha="true"></div>
+
+              <button type="submit" id="submit-btn" class="btn-action" style="border:none; cursor:pointer;">Send Message</button>
+
+              <!-- In-page result messages -->
+              <div id="form-success" style="display:none; margin-top:1rem; color:#E8702A; font-weight:600;">✓ Message sent! We'll be in touch soon.</div>
+              <div id="form-error" style="display:none; margin-top:1rem; color:#c0392b; font-weight:600;">Something went wrong. Please try again.</div>
+
             </form>
           </div>
 
@@ -1026,6 +1045,43 @@
       
       document.body.style.overflow = ''; // Unlock background scrolling
     }
+    // Web3Forms AJAX submission
+    const contactForm = document.getElementById('contact-form');
+    if (contactForm) {
+      contactForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submit-btn');
+        const successMsg = document.getElementById('form-success');
+        const errorMsg = document.getElementById('form-error');
+        btn.disabled = true;
+        btn.textContent = 'Sending...';
+        successMsg.style.display = 'none';
+        errorMsg.style.display = 'none';
+
+        try {
+          const formData = new FormData(contactForm);
+          const response = await fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            body: formData
+          });
+          const data = await response.json();
+          if (data.success) {
+            successMsg.style.display = 'block';
+            contactForm.reset();
+          } else {
+            errorMsg.style.display = 'block';
+          }
+        } catch (err) {
+          errorMsg.style.display = 'block';
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Send Message';
+        }
+      });
+    }
   </script>
+
+  <!-- Web3Forms hCaptcha script -->
+  <script src="https://web3forms.com/client/script.js" async defer></script>
 </body>
 </html>
