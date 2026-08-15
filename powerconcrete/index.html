@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PowerCONCRETE — Constraint-Driven Optimization for Precast Mix Design | Mrythm</title>
+<meta name="description" content="Precast plants pay for cement they don't need. PowerCONCRETE computes the full feasible space of concrete mixes under your real constraints and finds the lowest-cost mix inside it — with the engineering reasons made explicit." />
+<link rel="icon" href="../i/icon-product.png" />
+<link rel="canonical" href="https://www.mrythm.com/powerconcrete/" />
+
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://www.mrythm.com/powerconcrete/" />
+<meta property="og:title" content="PowerCONCRETE — Constraint-Driven Optimization for Precast Mix Design" />
+<meta property="og:description" content="Your mix isn't a recipe. It's one point in a space you've never mapped. PowerCONCRETE computes that space and finds the cheapest safe point inside it." />
+<meta property="og:image" content="https://www.mrythm.com/powerconcrete/i/og.jpg" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Apply the saved theme before first paint so there is no flash. -->
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem('pc-theme');
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+  }catch(e){}
+})();
+</script>
+
+<style>
+:root{
+  /* ---- shared ---- */
+  --paper:#f7f6f2;
+  --paper-2:#ffffff;
+  --ink:#111111;
+  --muted:#5d5c58;
+  --line:#dcdad0;
+  --line-soft:#e9e7e0;
+  --accent:#e85d22;
+
+  --font:'Syne',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --wrap:1240px;
+  --ease:cubic-bezier(.22,.61,.36,1);
+
+  /* ---- "deep" bands — LIGHT THEME values (the default) ----
+     Only the accent bands change between themes; the body of the page is
+     light in both. Every dark value below has a light counterpart. */
+  --deep:#eeebe2;
+  --deep-rgb:238,235,226;
+  --deep-2:#ffffff;
+  --deep-line:#d7d3c6;
+  --deep-muted:#5d5c58;
+  --deep-fg:#111111;
+  --deep-dim:#63615a;
+  --deep-hair:17,17,17;
+  --deep-hair-a:.16;
+  --hero-photo:.5;
+}
+
+/* dark bands when the reader's system asks for dark and they haven't chosen */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --deep:#0e1113;
+    --deep-rgb:14,17,19;
+    --deep-2:#171b1e;
+    --deep-line:#2a3034;
+    --deep-muted:#b9c0c5;
+    --deep-fg:#ffffff;
+    --deep-dim:#8b9298;
+    --deep-hair:255,255,255;
+    --deep-hair-a:.14;
+    --hero-photo:1;
+  }
+}
+/* explicit choice always wins, in both directions */
+:root[data-theme="dark"]{
+  --deep:#0e1113;
+  --deep-rgb:14,17,19;
+  --deep-2:#171b1e;
+  --deep-line:#2a3034;
+  --deep-muted:#b9c0c5;
+  --deep-fg:#ffffff;
+  --deep-dim:#8b9298;
+  --deep-hair:255,255,255;
+  --deep-hair-a:.14;
+  --hero-photo:1;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font);
+  background:var(--paper);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+  line-height:1.5;
+}
+img{max-width:100%;height:auto;display:block}
+a{color:inherit}
+
+/* ---------- graph-paper texture ---------- */
+.grid-bg{
+  position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(to right,var(--line) 1px,transparent 1px),
+    linear-gradient(to bottom,var(--line) 1px,transparent 1px);
+  background-size:56px 56px;
+  opacity:.35;
+  mask-image:radial-gradient(ellipse 100% 80% at 50% 40%,#000 30%,transparent 100%);
+  -webkit-mask-image:radial-gradient(ellipse 100% 80% at 50% 40%,#000 30%,transparent 100%);
+}
+.band--deep .grid-bg,.hero .grid-bg,.foot .grid-bg{
+  background-image:
+    linear-gradient(to right,var(--deep-line) 1px,transparent 1px),
+    linear-gradient(to bottom,var(--deep-line) 1px,transparent 1px);
+  opacity:.5;
+}
+
+/* ---------- progress + sticky bar ---------- */
+#progress{
+  position:fixed;top:0;left:0;height:2px;width:0;
+  background:var(--accent);z-index:200;transition:width .1s linear;
+}
+#bar{
+  position:fixed;top:0;left:0;right:0;z-index:150;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:1rem;
+  padding:.85rem clamp(1.25rem,4vw,3rem);
+  background:rgba(247,246,242,.82);
+  backdrop-filter:saturate(160%) blur(14px);
+  -webkit-backdrop-filter:saturate(160%) blur(14px);
+  border-bottom:1px solid var(--line);
+  transform:translateY(-102%);
+  transition:transform .5s var(--ease);
+}
+#bar.show{transform:translateY(0)}
+.bar-id{display:flex;align-items:center;gap:.7rem;min-width:0}
+.bar-actions{display:flex;align-items:center;gap:.6rem}
+.bar-id a.home{
+  font-size:1.05rem;font-weight:600;letter-spacing:-.04em;text-decoration:none;
+  opacity:.55;transition:opacity .2s;
+}
+.bar-id a.home:hover{opacity:1}
+.bar-id .sep{width:1px;height:16px;background:var(--line)}
+.bar-id strong{font-size:1.05rem;font-weight:700;letter-spacing:-.03em;white-space:nowrap}
+.bar-id strong span{font-weight:500}
+
+/* ---------- buttons ---------- */
+.btn{
+  --bg:var(--ink);--fg:#fff;--bd:var(--ink);
+  display:inline-flex;align-items:center;gap:.6rem;
+  background:var(--bg);color:var(--fg);border:1px solid var(--bd);
+  font-family:var(--font);font-weight:600;font-size:.95rem;letter-spacing:-.01em;
+  padding:.8rem 1.35rem;border-radius:50px;text-decoration:none;cursor:pointer;
+  transition:transform .25s var(--ease),background .25s,color .25s,border-color .25s,box-shadow .25s;
+  white-space:nowrap;
+}
+.btn svg{flex:0 0 auto;transition:transform .3s var(--ease)}
+.btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(17,17,17,.14)}
+.btn:hover svg{transform:translate(2px,-2px)}
+.btn--accent{--bg:var(--accent);--fg:#fff;--bd:var(--accent)}
+.btn--accent:hover{box-shadow:0 10px 26px rgba(232,93,34,.32)}
+.btn--ghost{--bg:transparent;--fg:var(--ink);--bd:var(--line)}
+.btn--ghost:hover{--bd:var(--ink);box-shadow:none}
+.btn--ghost-d{--bg:transparent;--fg:var(--deep-fg);--bd:rgba(var(--deep-hair),.34)}
+.btn--ghost-d:hover{--bd:var(--deep-fg);box-shadow:none}
+.btn--sm{padding:.6rem 1.1rem;font-size:.86rem}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+
+/* ---------- theme toggle ---------- */
+.theme-btn{
+  display:inline-flex;align-items:center;gap:.5rem;
+  font-family:var(--font);font-weight:600;font-size:.86rem;letter-spacing:-.01em;
+  padding:.55rem 1rem;border-radius:50px;cursor:pointer;
+  background:transparent;border:1px solid var(--line);color:var(--ink);
+  transition:border-color .25s,background .25s,color .25s;
+}
+.theme-btn:hover{border-color:var(--ink)}
+.theme-btn svg{flex:0 0 auto;display:none}
+.theme-btn svg.on{display:block}
+/* on the deep hero */
+.theme-btn--d{border-color:rgba(var(--deep-hair),.34);color:var(--deep-fg)}
+.theme-btn--d:hover{border-color:var(--deep-fg)}
+
+/* ---------- layout ---------- */
+.band{position:relative;padding:clamp(4.5rem,9vw,8.5rem) 0;overflow:hidden}
+.band--alt{background:var(--paper-2)}
+.band--deep{background:var(--deep);color:var(--deep-fg)}
+.band--deep .lede,.band--deep .body{color:var(--deep-muted)}
+.band+.band{border-top:1px solid var(--line)}
+.band--deep+.band,.band+.band--deep{border-top:none}
+.wrap{position:relative;z-index:2;width:100%;max-width:var(--wrap);margin:0 auto;padding:0 clamp(1.25rem,4vw,3rem)}
+
+/* ---------- type ---------- */
+.eyebrow{
+  display:flex;flex-wrap:wrap;align-items:center;gap:.7rem;
+  font-family:var(--mono);font-size:.72rem;font-weight:500;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--muted);
+  margin-bottom:1.5rem;line-height:1.7;
+}
+.band--deep .eyebrow{color:var(--deep-muted)}
+.eyebrow i{width:5px;height:5px;background:var(--accent);flex:0 0 auto;align-self:center}
+.eyebrow em{font-style:normal;color:var(--accent)}
+
+h2.display{
+  font-size:clamp(2.1rem,5.1vw,3.7rem);
+  font-weight:700;letter-spacing:-.045em;line-height:1.02;
+  max-width:21ch;text-wrap:balance;
+}
+h2.display.wide{max-width:27ch}
+.hero h1,h3.sub,.move h3,.foot h3{text-wrap:balance}
+h3.sub{font-size:clamp(1.15rem,2vw,1.4rem);font-weight:600;letter-spacing:-.02em;line-height:1.25}
+.lede{
+  font-size:clamp(1.12rem,1.6vw,1.32rem);line-height:1.62;color:var(--muted);
+  max-width:60ch;font-weight:400;
+}
+.body{font-size:1.06rem;line-height:1.68;color:var(--muted)}
+.hl{color:var(--ink);font-weight:600}
+.band--deep .hl{color:var(--deep-fg)}
+.acc{color:var(--accent)}
+
+.sec-head{margin-bottom:clamp(2.5rem,5vw,3.75rem)}
+.sec-head .lede{margin-top:1.5rem}
+
+/* section number rail */
+.rail{
+  position:absolute;left:clamp(1.25rem,4vw,3rem);top:clamp(4.5rem,9vw,8.5rem);
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;color:var(--line);
+  z-index:3;display:none;
+}
+.band--deep .rail{color:var(--deep-line)}
+@media(min-width:1480px){
+  .rail{display:block;left:calc(50% - var(--wrap)/2 - 76px)}
+}
+
+/* hairline rule with anchor squares */
+.rule{position:relative;height:1px;background:var(--line);margin:clamp(2.5rem,5vw,4rem) 0}
+.band--deep .rule{background:var(--deep-line)}
+.rule::before,.rule::after{content:'';position:absolute;width:4px;height:4px;background:var(--accent);top:-1.5px}
+.rule::before{left:0}
+.rule::after{right:0}
+
+/* ---------- figures ---------- */
+figure{position:relative}
+.fig{
+  position:relative;border:1px solid var(--line);background:var(--paper-2);
+  border-radius:2px;overflow:hidden;
+}
+.band--deep .fig{border-color:var(--deep-line);background:var(--deep-2)}
+.fig::before,.fig::after{content:'';position:absolute;width:5px;height:5px;background:var(--accent);z-index:3}
+.fig::before{top:-1px;left:-1px}
+.fig::after{bottom:-1px;right:-1px}
+.fig img{width:100%}
+figcaption{
+  font-family:var(--mono);font-size:.74rem;line-height:1.6;letter-spacing:.02em;
+  color:var(--muted);margin-top:.9rem;max-width:70ch;
+}
+.band--deep figcaption{color:var(--deep-muted)}
+
+/* ---------- process flow diagram (inline SVG) ---------- */
+.flow-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.flow{display:block;width:100%;height:auto;font-family:var(--font)}
+.flow-frame{fill:none;stroke:var(--line);stroke-width:1.6;stroke-dasharray:9 7}
+.flow-legend-bg{fill:var(--paper-2)}
+.flow-legend{fill:var(--muted);font-family:var(--mono);font-size:13px;letter-spacing:.18em}
+.flow-box{fill:var(--paper-2);stroke:var(--line);stroke-width:1.6}
+.flow-t{fill:var(--ink);font-size:19px;font-weight:500;letter-spacing:-.012em}
+.flow-line{stroke:var(--muted);stroke-width:1.6;fill:none}
+.flow-head{fill:var(--muted)}
+.flow-pc{fill:var(--paper-2);stroke:var(--accent);stroke-width:2.4}
+.flow-pc-t{fill:var(--accent);font-size:21px;font-weight:700;letter-spacing:-.02em}
+.flow-pc-s{fill:var(--ink);font-size:19px;font-weight:500;letter-spacing:-.012em}
+.flow-line--acc{stroke:var(--accent);stroke-width:2.2;fill:none}
+.flow-head--acc{fill:var(--accent)}
+.flow-hint{
+  display:none;font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--muted);margin-top:.75rem;
+}
+/* below the width where the labels stay comfortable, scroll at full size
+   rather than shrinking the type into illegibility */
+@media(max-width:1060px){
+  .flow{min-width:1000px}
+  .flow-hint{display:block}
+}
+
+/* zoomable screenshots */
+.fig--zoom{cursor:zoom-in}
+.fig--zoom .zoomtag{
+  position:absolute;right:.75rem;bottom:.75rem;z-index:4;
+  font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;
+  background:rgba(17,17,17,.82);color:#fff;padding:.4rem .7rem;border-radius:50px;
+  opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s;
+  pointer-events:none;
+}
+.fig--zoom:hover .zoomtag{opacity:1;transform:translateY(0)}
+
+/* ---------- HERO ---------- */
+.hero{
+  position:relative;background:var(--deep);color:var(--deep-fg);overflow:hidden;
+  padding:clamp(7rem,13vh,9.5rem) 0 clamp(3rem,6vw,5rem);
+  min-height:min(100svh,940px);display:flex;align-items:center;
+}
+.hero-photo{
+  position:absolute;left:0;right:0;bottom:0;height:58%;
+  background:url('i/hero-plant.webp') center bottom/cover no-repeat;
+  opacity:var(--hero-photo);z-index:1;
+  mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.75) 50%,transparent 100%);
+  -webkit-mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.75) 50%,transparent 100%);
+}
+.hero::after{
+  content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:
+    linear-gradient(to right,rgba(var(--deep-rgb),.92) 0%,rgba(var(--deep-rgb),.7) 42%,rgba(var(--deep-rgb),.2) 100%),
+    linear-gradient(to bottom,rgba(var(--deep-rgb),.88) 0%,rgba(var(--deep-rgb),.3) 52%,rgba(var(--deep-rgb),.92) 100%);
+}
+.hero .wrap{z-index:3}
+.hero-top{
+  position:absolute;top:0;left:0;right:0;z-index:5;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:1.5rem clamp(1.25rem,4vw,3rem);
+}
+.hero-top a.home{
+  display:inline-flex;align-items:center;gap:.55rem;text-decoration:none;
+  font-size:1.15rem;font-weight:600;letter-spacing:-.04em;color:var(--deep-fg);opacity:.72;transition:opacity .2s;
+}
+.hero-top a.home:hover{opacity:1}
+.hero-top .arrow{font-family:var(--mono);font-size:.9rem}
+
+.wordmark{
+  font-size:clamp(1.95rem,7.2vw,4.95rem);font-weight:700;line-height:.95;
+  letter-spacing:-.055em;margin-bottom:1.6rem;
+}
+.wordmark span{font-weight:400}
+.wordmark sup{font-size:.26em;font-weight:400;vertical-align:super;opacity:.55;letter-spacing:0}
+.hero h1{
+  font-size:clamp(1.5rem,3.5vw,2.5rem);font-weight:600;letter-spacing:-.035em;
+  line-height:1.16;max-width:19ch;margin-bottom:1.5rem;
+}
+.hero .lede{color:var(--deep-muted);max-width:56ch}
+.hero-cta{display:flex;flex-wrap:wrap;gap:.85rem;margin-top:2.5rem}
+
+.hero-strip{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:rgba(var(--deep-hair),var(--deep-hair-a));border:1px solid rgba(var(--deep-hair),var(--deep-hair-a));
+  margin-top:clamp(3rem,6vw,4.5rem);
+}
+.hero-strip div{background:rgba(var(--deep-rgb),.72);padding:1.15rem 1.25rem}
+.hero-strip dt{
+  font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--deep-dim);margin-bottom:.5rem;
+}
+.hero-strip dd{font-size:1.02rem;font-weight:600;letter-spacing:-.02em;line-height:1.3}
+.hero-strip dd small{display:block;font-size:.78rem;font-weight:400;color:var(--deep-dim);margin-top:.2rem;letter-spacing:0}
+
+.scrollcue{
+  position:absolute;bottom:1.75rem;left:50%;transform:translateX(-50%);z-index:5;
+  font-family:var(--mono);font-size:.64rem;letter-spacing:.2em;text-transform:uppercase;color:var(--deep-dim);
+  display:flex;flex-direction:column;align-items:center;gap:.6rem;
+}
+.scrollcue i{display:block;width:1px;height:34px;background:linear-gradient(to bottom,currentColor,transparent);animation:cue 2.4s var(--ease) infinite}
+@keyframes cue{0%{transform:scaleY(.2);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(.2);transform-origin:bottom}}
+
+/* ---------- big stat ---------- */
+.bignum{
+  font-size:clamp(3rem,10vw,7.4rem);font-weight:700;letter-spacing:-.06em;line-height:.92;
+  display:block;
+}
+.bignum-note{
+  display:block;font-size:clamp(1rem,1.5vw,1.2rem);font-weight:500;letter-spacing:-.01em;
+  color:var(--muted);margin-top:.9rem;
+}
+.band--deep .bignum-note{color:var(--deep-muted)}
+
+/* ---------- generic grids ---------- */
+.split{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(2rem,4.5vw,4.5rem);align-items:start}
+.split--mid{align-items:center}
+.split--figwide{grid-template-columns:1.2fr .8fr}
+.split--rev>*:first-child{order:2}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.5rem,3vw,2.75rem)}
+.cols2{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(1.75rem,3.5vw,3rem)}
+
+/* numbered move cards */
+.move{position:relative;padding-top:1.5rem;border-top:1px solid var(--line)}
+.band--deep .move{border-top-color:var(--deep-line)}
+.move::before{content:'';position:absolute;top:-2px;left:0;width:4px;height:4px;background:var(--accent)}
+.move .n{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;color:var(--accent);display:block;margin-bottom:.9rem}
+.move h3{font-size:1.28rem;font-weight:700;letter-spacing:-.03em;line-height:1.2;margin-bottom:.7rem}
+.move p{font-size:1.01rem;line-height:1.62;color:var(--muted)}
+.band--deep .move p{color:var(--deep-muted)}
+
+/* constraint chips */
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.5rem}
+.chip{
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.04em;
+  border:1px solid var(--line);border-radius:50px;padding:.42rem .85rem;color:var(--muted);
+  background:var(--paper-2);
+}
+.band--deep .chip{border-color:var(--deep-line);background:transparent;color:var(--deep-muted)}
+
+/* ---------- economics strip ---------- */
+.calc{
+  display:grid;grid-template-columns:repeat(5,1fr);
+  border:1px solid var(--line);background:var(--paper-2);margin-bottom:2.5rem;
+}
+.band--deep .calc{border-color:var(--deep-line);background:transparent}
+.calc div{padding:1.4rem 1.35rem;border-right:1px solid var(--line);position:relative}
+.band--deep .calc div{border-right-color:var(--deep-line)}
+.calc div:last-child{border-right:none}
+.calc dt{font-family:var(--mono);font-size:.63rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:.7rem;line-height:1.5}
+.calc dd{font-size:1.45rem;font-weight:700;letter-spacing:-.035em}
+.calc dd small{font-size:.62em;font-weight:500;color:var(--muted);letter-spacing:-.01em}
+.calc div.out dd{color:var(--accent)}
+
+/* ---------- comparison list ---------- */
+.vs{border-top:1px solid var(--line)}
+.band--deep .vs{border-top-color:var(--deep-line)}
+.vs>div{
+  display:grid;grid-template-columns:minmax(180px,.85fr) 2.15fr;gap:clamp(1rem,3vw,3rem);
+  padding:1.7rem 0;border-bottom:1px solid var(--line);position:relative;
+}
+.band--deep .vs>div{border-bottom-color:var(--deep-line)}
+.vs h3{font-size:1.12rem;font-weight:700;letter-spacing:-.025em}
+.vs h3 em{font-style:normal;font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);display:block;margin-bottom:.45rem}
+.vs p{font-size:1.04rem;line-height:1.64;color:var(--muted)}
+.band--deep .vs p{color:var(--deep-muted)}
+
+/* ---------- footer ---------- */
+.foot{background:var(--deep);color:var(--deep-fg);padding:clamp(3.5rem,6vw,5rem) 0 2.5rem;position:relative;overflow:hidden}
+.foot-top{display:grid;grid-template-columns:1.3fr 1fr;gap:clamp(2rem,4vw,4rem);align-items:start}
+.foot h3{font-size:clamp(1.35rem,2.6vw,1.9rem);font-weight:700;letter-spacing:-.035em;line-height:1.2;max-width:22ch}
+.foot p{color:var(--deep-muted);font-size:1.01rem;line-height:1.65;margin-top:1.1rem;max-width:52ch}
+.foot .who{border-left:1px solid var(--deep-line);padding-left:clamp(1.25rem,2.5vw,2rem)}
+.foot .who dt{font-family:var(--mono);font-size:.63rem;letter-spacing:.16em;text-transform:uppercase;color:var(--deep-dim);margin-bottom:.8rem}
+.foot .who dd{font-size:.98rem;line-height:1.6;color:var(--deep-muted);margin-bottom:1.1rem}
+.foot .who dd strong{color:var(--deep-fg);font-weight:600;display:block}
+.foot-cta{display:flex;flex-wrap:wrap;gap:.85rem;margin-top:2rem}
+.foot-base{
+  display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;align-items:center;
+  margin-top:clamp(2.5rem,5vw,4rem);padding-top:1.5rem;border-top:1px solid var(--deep-line);
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;color:var(--deep-dim);
+}
+.foot-base a{text-decoration:none;color:var(--deep-dim);transition:color .2s}
+.foot-base a:hover{color:var(--deep-fg)}
+
+/* ---------- lightbox ---------- */
+#lb{
+  position:fixed;inset:0;z-index:300;background:rgba(10,12,13,.94);
+  display:flex;align-items:center;justify-content:center;padding:clamp(1rem,3vw,3rem);
+  opacity:0;visibility:hidden;transition:opacity .3s var(--ease),visibility .3s;
+}
+#lb.on{opacity:1;visibility:visible}
+#lb img{max-width:100%;max-height:100%;object-fit:contain;border:1px solid rgba(255,255,255,.12)}
+#lb .close{
+  position:absolute;top:1.25rem;right:1.25rem;
+  background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff;
+  width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:1.1rem;
+  display:flex;align-items:center;justify-content:center;transition:background .2s,border-color .2s;
+}
+#lb .close:hover{background:#fff;color:var(--deep);border-color:#fff}
+#lb .cap{
+  position:absolute;left:0;right:0;bottom:1rem;text-align:center;
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;color:#8b9298;padding:0 2rem;
+}
+
+/* ---------- reveal ---------- */
+.rv{opacity:0;transform:translateY(14px);transition:opacity .65s var(--ease),transform .65s var(--ease)}
+.rv.in{opacity:1;transform:none}
+
+/* ---------- responsive ---------- */
+@media(max-width:1023px){
+  .split{grid-template-columns:1fr;gap:2.25rem}
+  .split--rev>*:first-child{order:0}
+  .cols3{grid-template-columns:1fr}
+  .calc{grid-template-columns:1fr 1fr}
+  .calc div{border-bottom:1px solid var(--line)}
+  .calc div:nth-child(odd){border-right:1px solid var(--line)}
+  .calc div:nth-child(even){border-right:none}
+  .calc div.out{grid-column:1/-1;border-right:none;border-bottom:none}
+  .hero-strip{grid-template-columns:1fr 1fr}
+  .foot-top{grid-template-columns:1fr}
+  .foot .who{border-left:none;border-top:1px solid var(--deep-line);padding-left:0;padding-top:1.75rem}
+}
+@media(max-width:719px){
+  .eyebrow{letter-spacing:.14em;font-size:.68rem;gap:.55rem}
+  .cols2{grid-template-columns:1fr}
+  .vs>div{grid-template-columns:1fr;gap:.75rem}
+  .hero{min-height:auto;padding-top:6.5rem}
+  .hero-strip{grid-template-columns:1fr}
+  .scrollcue{display:none}
+  #bar{padding:.7rem 1rem;gap:.5rem}
+  #bar .btn span.long{display:none}
+  .bar-id a.home,.bar-id .sep{display:none}
+  .bar-id strong{font-size:.92rem}
+  .bar-actions{gap:.45rem}
+  #bar .btn--sm{padding:.55rem .9rem;font-size:.8rem}
+  #bar .theme-btn{width:36px;height:36px;padding:0;justify-content:center}
+  #bar .theme-btn .theme-label{
+    position:absolute;width:1px;height:1px;overflow:hidden;
+    clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .rv{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<!-- ============ STICKY BAR ============ -->
+<header id="bar">
+  <div class="bar-id">
+    <a class="home" href="../">mrythm</a>
+    <span class="sep"></span>
+    <strong>Power<span>CONCRETE</span></strong>
+  </div>
+  <div class="bar-actions">
+    <button class="theme-btn" data-theme-toggle type="button">
+      <svg class="ic-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.6v2.4M12 20v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M1.6 12h2.4M20 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>
+      <svg class="ic-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"/></svg>
+      <span class="theme-label">Theme</span>
+    </button>
+    <a class="btn btn--accent btn--sm" href="https://powerconcrete.app/" target="_blank" rel="noopener">
+      Launch <span class="long">PowerCONCRETE&nbsp;</span>app
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+    </a>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="hero-photo"></div>
+  <div class="grid-bg" style="opacity:.16"></div>
+
+  <div class="hero-top">
+    <a class="home" href="../"><span class="arrow">←</span> mrythm</a>
+    <button class="theme-btn theme-btn--d" data-theme-toggle type="button">
+      <svg class="ic-sun" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.6v2.4M12 20v2.4M4.2 4.2l1.7 1.7M18.1 18.1l1.7 1.7M1.6 12h2.4M20 12h2.4M4.2 19.8l1.7-1.7M18.1 5.9l1.7-1.7"/></svg>
+      <svg class="ic-moon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"/></svg>
+      <span class="theme-label">Theme</span>
+    </button>
+  </div>
+
+  <div class="wrap">
+    <div class="eyebrow"><i></i><span>Mrythm&nbsp;&nbsp;/&nbsp;&nbsp;Product</span><em>Available now</em></div>
+
+    <div class="wordmark">Power<span>CONCRETE</span><sup>™</sup></div>
+
+    <h1>Precast plants pay for cement they don't need.</h1>
+
+    <p class="lede">
+      PowerCONCRETE finds the lowest-cost concrete mix that still meets every requirement you
+      have — strength, finish, durability, workability, color, carbon — and shows you exactly
+      which limits are holding it there.
+    </p>
+
+    <div class="hero-cta">
+      <a class="btn btn--accent" href="https://powerconcrete.app/" target="_blank" rel="noopener">
+        Launch PowerCONCRETE app
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+      </a>
+      <a class="btn btn--ghost-d" href="#cost">
+        What it's costing you
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+      </a>
+    </div>
+
+    <dl class="hero-strip">
+      <div><dt>For</dt><dd>Precast concrete plants<small>architectural &amp; structural</small></dd></div>
+      <div><dt>Replaces</dt><dd>Conservative overdesign<small>with computed limits</small></dd></div>
+      <div><dt>Typical impact</dt><dd>≈ $275,000 / year<small>at 25,000 yd³</small></dd></div>
+      <div><dt>Carbon</dt><dd>12–19% lower<small>at no cost premium</small></dd></div>
+    </dl>
+  </div>
+
+  <div class="scrollcue">Scroll<i></i></div>
+</section>
+
+<!-- ============ 01 · THE COST ============ -->
+<section class="band" id="cost">
+  <div class="grid-bg"></div>
+  <div class="rail">01 / 09</div>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="eyebrow"><i></i> The hidden cement tax</div>
+      <h2 class="display">$160,000 to $480,000 a year. Nobody budgeted for it.</h2>
+    </div>
+
+    <div class="split">
+      <div class="rv">
+        <p class="lede">
+          Cement chemistry shifts between mill runs. Quarries evolve, so gradation drifts.
+          Supplementary cementitious materials vary in reactivity and fineness.
+        </p>
+        <p class="lede" style="margin-top:1.25rem">
+          Your lab absorbs all of it the only way it safely can — <span class="hl">a few extra
+          pounds of cement here, a wider margin there.</span> It works. It also never comes
+          back off.
+        </p>
+        <div class="rule"></div>
+        <p class="body">
+          For a plant running 20,000–40,000 yd³ a year, 40–60 lb/yd³ of accumulated caution is
+          <span class="hl">$160,000–$480,000 in recurring annual margin</span> — spent again
+          every year, embedded in recipes nobody has re-derived from first principles.
+        </p>
+      </div>
+
+      <figure class="rv">
+        <div class="fig"><img src="i/cost-chain.webp" alt="Chain diagram: raw material drift leads to cement buffering, which compounds over time into $160k–$480k per year of profit erosion." loading="lazy" width="1343" height="755"></div>
+        <figcaption>How a rational safety habit becomes a permanent line item.</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 · WHY ============ -->
+<section class="band band--alt">
+  <div class="grid-bg"></div>
+  <div class="rail">02 / 09</div>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="eyebrow"><i></i> This is not a mistake</div>
+      <h2 class="display wide">Every good plant does this. It's the rational move.</h2>
+      <p class="lede">
+        Stripping failure is expensive. Surface defects get rejected. Curing cycles are locked
+        to the schedule. When uncertainty rises, adding margin is fast — and recalculating is not.
+      </p>
+    </div>
+
+    <figure class="rv">
+      <div class="fig"><img src="i/why-heuristics.webp" alt="Three linked ideas: no explicit safe operating envelope, no rigorous trade-off evaluation, and so the industry defaults to conservative heuristics — over-engineered mixes, excessive buffer, restricted growth." loading="lazy" width="1343" height="755"></div>
+    </figure>
+
+    <div class="rule"></div>
+
+    <div class="cols2">
+      <div class="rv">
+        <h3 class="sub">The problem isn't the caution.</h3>
+        <p class="body" style="margin-top:.9rem">
+          Conservative buffering is the correct response to variability when you have no other
+          instrument. It protects the schedule, the finish, and the customer.
+        </p>
+      </div>
+      <div class="rv">
+        <h3 class="sub">The problem is that nobody has calculated where the safe edge actually is.</h3>
+        <p class="body" style="margin-top:.9rem">
+          Without a computed boundary, there is no way to know how much margin is engineering
+          and how much is habit. So the margin only ever grows.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 · THE INSIGHT ============ -->
+<section class="band band--deep">
+  <div class="grid-bg"></div>
+  <div class="rail">03 / 09</div>
+  <div class="wrap">
+    <div class="sec-head rv" style="text-align:center;display:flex;flex-direction:column;align-items:center">
+      <div class="eyebrow"><i></i> The key insight</div>
+      <h2 class="display wide" style="max-width:24ch">Your mix isn't a recipe. It's one point in a space nobody has mapped.</h2>
+    </div>
+
+    <figure class="rv">
+      <div class="fig"><img src="i/feasible-space.webp" alt="A constrained mix space drawn as a faceted volume: many valid mixes form a feasible region, and one glowing point marks the lowest-cost mix inside it." loading="lazy" width="1343" height="755"></div>
+    </figure>
+
+    <div class="cols3" style="margin-top:clamp(2.5rem,5vw,4rem)">
+      <div class="move rv">
+        <span class="n">A</span>
+        <h3>Thousands of mixes satisfy every requirement you have.</h3>
+        <p>Not one. For any product you make, a whole set of formulations clears strength, finish, durability and workability.</p>
+      </div>
+      <div class="move rv">
+        <span class="n">B</span>
+        <h3>That set is real, bounded, and computable.</h3>
+        <p>Its edges are physics and chemistry — packing, paste balance, w/cm, binder limits — not opinion.</p>
+      </div>
+      <div class="move rv">
+        <span class="n">C</span>
+        <h3>Your current mix sits somewhere inside it.</h3>
+        <p>Almost certainly not at the cheap end, because nothing in the normal workflow ever pushes it there.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 · WHAT WE DO ============ -->
+<section class="band">
+  <div class="grid-bg"></div>
+  <div class="rail">04 / 09</div>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="eyebrow"><i></i> What PowerCONCRETE does</div>
+      <h2 class="display">Three moves.</h2>
+      <p class="lede">
+        Nothing is inferred from history. Everything is computed from your materials, your
+        specifications and your plant's own rules.
+      </p>
+    </div>
+
+    <figure class="rv" style="margin-bottom:clamp(2.5rem,5vw,3.5rem)">
+      <div class="fig"><img src="i/what-it-does.webp" alt="Three panels: builds the full feasible formulation space, enforces constraints as hard boundaries, optimizes cost within that space." loading="lazy" width="1600" height="900"></div>
+    </figure>
+
+    <div class="cols3">
+      <div class="move rv">
+        <span class="n">01</span>
+        <h3>Builds the full feasible space</h3>
+        <p>Every mix your actual materials can produce — densities, particle size distributions, chemistries, costs and carbon factors from your own library.</p>
+      </div>
+      <div class="move rv">
+        <span class="n">02</span>
+        <h3>Enforces your constraints as hard walls</h3>
+        <p>Not preferences to be traded away. Walls. The solver cannot return a mix that breaks one of them.</p>
+        <div class="chips">
+          <span class="chip">strength</span><span class="chip">w/cm</span><span class="chip">SCM limits</span>
+          <span class="chip">particle packing</span><span class="chip">rheology</span><span class="chip">paste balance</span>
+          <span class="chip">air</span><span class="chip">color</span><span class="chip">durability</span><span class="chip">carbon cap</span>
+        </div>
+      </div>
+      <div class="move rv">
+        <span class="n">03</span>
+        <h3>Finds the lowest-cost point inside</h3>
+        <p>And names the limits that are holding it there — so your engineers can see what a change would actually be worth before making it.</p>
+      </div>
+    </div>
+
+    <div class="rule"></div>
+
+    <p class="lede rv">
+      When something changes — new cement chemistry, a different quarry, a price move — the
+      feasible space is <span class="hl">recomputed</span> and a new optimum is returned.
+      Variability stops being financed with cement.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 05 · WHERE IT FITS ============ -->
+<section class="band band--alt">
+  <div class="grid-bg"></div>
+  <div class="rail">05 / 09</div>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="eyebrow"><i></i> Where it fits</div>
+      <h2 class="display wide">One box in your plant. Nothing else moves.</h2>
+      <p class="lede">
+        Your manufacturing method, curing process, equipment, labor practices and QC procedures
+        are treated as <span class="hl">fixed inputs</span> — not variables to be optimized.
+      </p>
+    </div>
+
+    <figure class="rv">
+      <div class="fig" style="padding:clamp(.85rem,1.8vw,1.4rem)">
+        <div class="flow-scroll">
+          <svg class="flow" viewBox="0 16 1100 428" role="img" aria-labelledby="flowTitle flowDesc">
+            <title id="flowTitle">Where PowerCONCRETE sits in the precast manufacturing process</title>
+            <desc id="flowDesc">Eleven sequential plant operations — engineering and shop drawings, mold preparation, reinforcement and embeds, batching and mixing, casting and consolidation, curing, stripping or demolding, finishing, quality control, storage, shipping — enclosed in a dashed boundary marked "plant process, treated as fixed". PowerCONCRETE sits outside that boundary and feeds concrete mix optimization into the batching and mixing step.</desc>
+
+            <defs>
+              <marker id="fh" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0 0.6 L9 5 L0 9.4 Z" class="flow-head"/>
+              </marker>
+              <marker id="fh-acc" viewBox="0 0 10 10" refX="8.6" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">
+                <path d="M0 0.6 L9 5 L0 9.4 Z" class="flow-head--acc"/>
+              </marker>
+            </defs>
+
+            <!-- the plant, treated as fixed -->
+            <rect class="flow-frame" x="10" y="140" width="1080" height="290" rx="3"/>
+            <rect class="flow-legend-bg" x="24" y="130" width="368" height="20"/>
+            <text class="flow-legend" x="30" y="146">PLANT PROCESS — TREATED AS FIXED</text>
+
+            <!-- row 1 -->
+            <g>
+              <rect class="flow-box" x="30"  y="170" width="150" height="86" rx="2"/>
+              <text class="flow-t" x="105" y="196" text-anchor="middle"><tspan x="105">Engineering</tspan><tspan x="105" dy="23">&amp; Shop</tspan><tspan x="105" dy="23">Drawings</tspan></text>
+
+              <rect class="flow-box" x="208" y="170" width="150" height="86" rx="2"/>
+              <text class="flow-t" x="283" y="208" text-anchor="middle"><tspan x="283">Mold</tspan><tspan x="283" dy="23">Preparation</tspan></text>
+
+              <rect class="flow-box" x="386" y="170" width="150" height="86" rx="2"/>
+              <text class="flow-t" x="461" y="208" text-anchor="middle"><tspan x="461">Reinforcement</tspan><tspan x="461" dy="23">&amp; Embeds</tspan></text>
+
+              <rect class="flow-box" x="564" y="170" width="150" height="86" rx="2"/>
+              <text class="flow-t" x="639" y="208" text-anchor="middle"><tspan x="639">Batching</tspan><tspan x="639" dy="23">&amp; Mixing</tspan></text>
+
+              <rect class="flow-box" x="742" y="170" width="150" height="86" rx="2"/>
+              <text class="flow-t" x="817" y="208" text-anchor="middle"><tspan x="817">Casting &amp;</tspan><tspan x="817" dy="23">Consolidation</tspan></text>
+
+              <rect class="flow-box" x="920" y="170" width="150" height="86" rx="2"/>
+              <text class="flow-t" x="995" y="220" text-anchor="middle">Curing</text>
+            </g>
+
+            <!-- row 2 -->
+            <g>
+              <rect class="flow-box" x="30"  y="314" width="150" height="86" rx="2"/>
+              <text class="flow-t" x="105" y="352" text-anchor="middle"><tspan x="105">Stripping</tspan><tspan x="105" dy="23">(Demolding)</tspan></text>
+
+              <rect class="flow-box" x="208" y="314" width="150" height="86" rx="2"/>
+              <text class="flow-t" x="283" y="364" text-anchor="middle">Finishing</text>
+
+              <rect class="flow-box" x="386" y="314" width="150" height="86" rx="2"/>
+              <text class="flow-t" x="461" y="352" text-anchor="middle"><tspan x="461">Quality</tspan><tspan x="461" dy="23">Control</tspan></text>
+
+              <rect class="flow-box" x="564" y="314" width="150" height="86" rx="2"/>
+              <text class="flow-t" x="639" y="364" text-anchor="middle">Storage</text>
+
+              <rect class="flow-box" x="742" y="314" width="150" height="86" rx="2"/>
+              <text class="flow-t" x="817" y="364" text-anchor="middle">Shipping</text>
+            </g>
+
+            <!-- step arrows -->
+            <g class="flow-line" marker-end="url(#fh)">
+              <line x1="184" y1="213" x2="204" y2="213"/>
+              <line x1="362" y1="213" x2="382" y2="213"/>
+              <line x1="540" y1="213" x2="560" y2="213"/>
+              <line x1="718" y1="213" x2="738" y2="213"/>
+              <line x1="896" y1="213" x2="916" y2="213"/>
+              <line x1="184" y1="357" x2="204" y2="357"/>
+              <line x1="362" y1="357" x2="382" y2="357"/>
+              <line x1="540" y1="357" x2="560" y2="357"/>
+              <line x1="718" y1="357" x2="738" y2="357"/>
+            </g>
+
+            <!-- wrap from the end of row 1 to the start of row 2 -->
+            <path class="flow-line" d="M995 256 V270 Q995 284 981 284 H119 Q105 284 105 298 V310" marker-end="url(#fh)"/>
+
+            <!-- PowerCONCRETE, feeding the mix decision -->
+            <rect class="flow-pc" x="514" y="30" width="250" height="98" rx="3"/>
+            <text class="flow-pc-t" x="639" y="66" text-anchor="middle">PowerCONCRETE</text>
+            <text class="flow-pc-s" x="639" y="90" text-anchor="middle"><tspan x="639">Concrete Mix</tspan><tspan x="639" dy="22">Optimization</tspan></text>
+            <line class="flow-line--acc" x1="639" y1="128" x2="639" y2="166" marker-end="url(#fh-acc)"/>
+          </svg>
+        </div>
+      </div>
+      <div class="flow-hint">← scroll to see the full process →</div>
+      <figcaption>PowerCONCRETE improves the engineering decision that happens <em>before</em> production begins. Everything inside the dashed boundary stays exactly as it is.</figcaption>
+    </figure>
+
+    <div class="rule"></div>
+
+    <div class="cols3">
+      <div class="move rv"><span class="n">IN THE LAB</span><h3>Used during mix design</h3><p>Your lab updates material data and computes a new optimized formulation. Existing spreadsheets and habits stay available alongside it.</p></div>
+      <div class="move rv"><span class="n">IN THE PLANT</span><h3>Validated your normal way</h3><p>The resulting mix goes through your standard trial, approval and release procedure before it ever reaches production.</p></div>
+      <div class="move rv"><span class="n">NO DISRUPTION</span><h3>No new equipment. No retraining.</h3><p>Batching systems, quality control and production operations are untouched. Nothing about how you build changes.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 06 · WHAT YOU GET ============ -->
+<section class="band">
+  <div class="grid-bg"></div>
+  <div class="rail">06 / 09</div>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="eyebrow"><i></i> What you get</div>
+      <h2 class="display">An answer — and the reason for it.</h2>
+      <p class="lede">Real screens from the product. Click any of them to read the numbers.</p>
+    </div>
+
+    <figure class="rv" style="margin-bottom:clamp(2.75rem,5vw,4rem)">
+      <div class="fig fig--zoom" data-full="i/screen-optimized-mix.webp" data-cap="Optimized mix — cost, batch, w/cm, air, carbon and particle packing, all checked">
+        <img src="i/screen-optimized-mix.webp" alt="PowerCONCRETE optimized mix screen showing optimal cost per cubic yard, total mass, w/cm ratio, air content, embodied carbon, the full material batch, a packing quality gauge, Tarantula curve, packing deviation by sieve and ASTM gradation chart." loading="lazy" width="1800" height="1013">
+        <span class="zoomtag">Click to enlarge</span>
+      </div>
+      <figcaption>
+        <span class="hl" style="font-family:var(--font);font-size:.95rem">The optimized mix.</span>
+        Cost per cubic yard, the full batch by material, w/cm, air, embodied carbon against your cap —
+        and packing verified against ASTM gradation and the Tarantula curve.
+      </figcaption>
+    </figure>
+
+    <div class="cols2">
+      <figure class="rv">
+        <div class="fig fig--zoom" data-full="i/screen-scenario-compare.webp" data-cap="Scenario comparison — base vs carbon-focus, with exact deltas">
+          <img src="i/screen-scenario-compare.webp" alt="Scenario comparison screen: base architectural mix at $166.44 per cubic yard versus a carbon-focus scenario at $157.19, with a performance delta summary and material composition comparison." loading="lazy" width="1800" height="1013">
+          <span class="zoomtag">Click to enlarge</span>
+        </div>
+        <figcaption>
+          <span class="hl" style="font-family:var(--font);font-size:.95rem">Scenario comparison.</span>
+          Base against cost-focus, carbon-focus, strength-focus — with the exact cost, cement,
+          w/cm and CO₂ deltas between any two.
+        </figcaption>
+      </figure>
+
+      <figure class="rv">
+        <div class="fig fig--zoom" data-full="i/screen-cost-carbon.webp" data-cap="Cost waterfall, EPD report and constraint slack — where the money went and what is binding">
+          <img src="i/screen-cost-carbon.webp" alt="Cost waterfall by material class alongside an embodied carbon EPD report and a constraint slack table showing which constraints are binding, near-binding and slack." loading="lazy" width="1800" height="1013">
+          <span class="zoomtag">Click to enlarge</span>
+        </div>
+        <figcaption>
+          <span class="hl" style="font-family:var(--font);font-size:.95rem">The reasoning, exposed.</span>
+          A cost waterfall showing where every dollar came from, an EPD-ready carbon report, and
+          a constraint table naming exactly which limits are binding.
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 07 · COST + CARBON ============ -->
+<section class="band band--deep">
+  <div class="grid-bg"></div>
+  <div class="rail">07 / 09</div>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="eyebrow"><i></i> Cost and carbon</div>
+      <h2 class="display wide">Cheaper and lower-carbon turn out to be the same direction.</h2>
+      <p class="lede">
+        General contractors and owners are making embodied carbon a condition of the job. The
+        useful surprise is that you don't have to buy it.
+      </p>
+    </div>
+
+    <div class="split split--figwide">
+      <figure class="rv">
+        <div class="fig fig--zoom" data-full="i/cost-vs-carbon.webp" data-cap="Cost vs carbon, and carbon vs Portland fraction — overdesign versus optimal"><span class="zoomtag">Click to enlarge</span><img src="i/cost-vs-carbon.webp" alt="Two scatter charts: cost versus carbon, and carbon versus Portland fraction of binder, showing high-overdesign scenarios in the high-cost high-carbon corner and the optimal reduction cluster at lower cement, lower cost and lower carbon." loading="lazy" width="1700" height="956"></div>
+        <figcaption>High overdesign sits at high cement, high cost and high carbon. Optimization moves all three down together.</figcaption>
+      </figure>
+
+      <div class="rv">
+        <span class="bignum">12–19%</span>
+        <span class="bignum-note">lower embodied carbon</span>
+        <p class="lede" style="margin-top:1.75rem">
+          Carbon-focus scenarios cut embodied carbon 12–19% against base mixes
+          <span class="hl">while holding or reducing material cost.</span>
+        </p>
+        <div class="rule" style="margin:2rem 0"></div>
+        <p class="body">
+          In mix families already engineered for low carbon intensity, the carbon-focus scenario
+          reaches <span class="hl">below 120 kg CO₂e/yd³</span> at essentially no premium over
+          the base mix. And when a GC asks for an EPD, you already have the report.
+        </p>
+        <p class="body" style="margin-top:1.5rem;font-size:.86rem;opacity:.8">
+          Representative model results. Plant-specific values depend on local materials, cement
+          factors, SCM availability and performance constraints.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 08 · WHAT IT'S WORTH ============ -->
+<section class="band">
+  <div class="grid-bg"></div>
+  <div class="rail">08 / 09</div>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="eyebrow"><i></i> What it's worth</div>
+      <h2 class="display wide">Mix design sits upstream of every batch you pour.</h2>
+      <p class="lede">
+        Which is why a small change to the formulation multiplies across an entire production
+        year. A representative mid-tier operation:
+      </p>
+    </div>
+
+    <dl class="calc rv">
+      <div><dt>Annual production</dt><dd>25,000 <small>yd³</small></dd></div>
+      <div><dt>Baseline cement</dt><dd>750 <small>lb/yd³</small></dd></div>
+      <div><dt>Cement price</dt><dd>$0.20 <small>/lb</small></dd></div>
+      <div><dt>Optimized reduction</dt><dd>−55 <small>lb/yd³</small></dd></div>
+      <div class="out"><dt>Saving per yd³</dt><dd>$11.00</dd></div>
+    </dl>
+
+    <div class="split rv" style="align-items:end">
+      <div>
+        <div class="eyebrow" style="margin-bottom:1rem"><i></i> Recurring annual saving</div>
+        <span class="bignum acc" id="counter" data-target="275000">$0</span>
+      </div>
+      <p class="body">
+        No operational disruption. No new equipment. No staffing changes.
+        <span class="hl">The saving is structural</span> — it comes from replacing conservative
+        buffering with engineered constraint control, on a decision you already make every time
+        a mix is designed.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 09 · WHY THIS ============ -->
+<section class="band band--alt">
+  <div class="grid-bg"></div>
+  <div class="rail">09 / 09</div>
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="eyebrow"><i></i> Why deterministic</div>
+      <h2 class="display wide">A prediction is not a guarantee. On a stripping day, that difference is the whole job.</h2>
+    </div>
+
+    <figure class="rv" style="margin-bottom:clamp(2.5rem,5vw,3.5rem)">
+      <div class="fig"><img src="i/deterministic.webp" alt="Exploded isometric diagram labelled deterministic — one solution, constraint-first — physics defines limits, and transparent — immediately clear." loading="lazy" width="1600" height="900"></div>
+    </figure>
+
+    <div class="vs rv">
+      <div>
+        <h3><em>vs</em> Spreadsheets</h3>
+        <p>A spreadsheet evaluates one candidate mix against nominal assumptions. It cannot define a feasible envelope, enforce constraints across chemistry, packing and rheology at once, or solve for an economic optimum. It executes engineering judgment — it doesn't expand it.</p>
+      </div>
+      <div>
+        <h3><em>vs</em> Batch automation</h3>
+        <p>Dispatching, moisture compensation, inventory, scheduling. Genuinely valuable, and complementary — but all of it operates downstream of the mix decision, never on it.</p>
+      </div>
+      <div>
+        <h3><em>vs</em> Machine learning</h3>
+        <p>Pattern-based prediction in exchange for constraint enforcement and interpretability. When stripping is on the line, knowing <em style="font-style:normal" class="hl">why</em> a formulation is safe matters as much as knowing that it probably is.</p>
+      </div>
+      <div>
+        <h3><em>The payoff</em> Three things you can't buy any other way</h3>
+        <p><span class="hl">Transparency</span> — engineers see which constraints govern the solution, and why.
+           <span class="hl">Reliability</span> — the solver cannot propose a mix that violates a defined limit; safety is enforced, not weighted.
+           <span class="hl">Interpretability</span> — binding constraints and sensitivities are directly observable, so a decision can be explained and defended.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CLOSE ============ -->
+<section class="band band--deep" style="padding-bottom:clamp(3rem,6vw,5rem)">
+  <div class="grid-bg"></div>
+  <div class="wrap">
+    <figure class="rv">
+      <div class="fig"><img src="i/close.webp" alt="PowerCONCRETE turns mix design from heuristic practice into a deterministic, economically optimized system — illustrated as scattered, uncertain inputs resolving through a lens into an ordered, well-packed aggregate structure." loading="lazy" width="1600" height="900"></div>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="foot">
+  <div class="grid-bg" style="opacity:.3"></div>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="rv">
+        <div class="eyebrow"><i></i> Get started</div>
+        <h3>Bring one of your own mixes. We'll compute what it could have been.</h3>
+        <p>
+          PowerCONCRETE is licensed software, available now. It's built for mid-tier precast
+          manufacturers running 15,000–50,000 yd³ a year with cement-intensive product lines and
+          dedicated laboratory oversight.
+        </p>
+        <div class="foot-cta">
+          <a class="btn btn--accent" href="https://powerconcrete.app/" target="_blank" rel="noopener">
+            Launch PowerCONCRETE app
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>
+          </a>
+          <a class="btn btn--ghost-d" href="../?panel=contact">Talk to us</a>
+        </div>
+      </div>
+
+      <dl class="who rv">
+        <dt>Built by Mrythm</dt>
+        <dd>
+          <strong>Suresh Sundaram</strong>
+          Chemical engineer, PhD MIT. 24 years at Aspen Technology building process optimization
+          for refining, chemicals and life sciences. The optimization model behind PowerCONCRETE
+          is his work.
+        </dd>
+        <dd>
+          <strong>Ashok Subramanian</strong>
+          AT&amp;T Labs, Oracle, AspenTech, Dassault Systèmes, CentralSquare. Product architecture,
+          cloud systems and deployment — the reason this is a product and not a research tool.
+        </dd>
+      </dl>
+    </div>
+
+    <div class="foot-base">
+      <span>PowerCONCRETE™ — Economic clarity under constraints</span>
+      <span><a href="../">mrythm.com</a> &nbsp;·&nbsp; <a href="https://powerconcrete.app/" target="_blank" rel="noopener">powerconcrete.app</a></span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ LIGHTBOX ============ -->
+<div id="lb" role="dialog" aria-modal="true" aria-label="Enlarged screenshot" hidden>
+  <button class="close" aria-label="Close">✕</button>
+  <img alt="">
+  <div class="cap"></div>
+</div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---- theme: light / dark, defaulting to the reader's system setting ---- */
+  var root = document.documentElement;
+  var sysDark = window.matchMedia('(prefers-color-scheme: dark)');
+  var toggles = document.querySelectorAll('[data-theme-toggle]');
+
+  function current(){
+    var set = root.getAttribute('data-theme');
+    if (set === 'light' || set === 'dark') return set;
+    return sysDark.matches ? 'dark' : 'light';
+  }
+  function paint(){
+    var now = current();
+    var next = now === 'dark' ? 'light' : 'dark';
+    toggles.forEach(function(btn){
+      btn.querySelector('.ic-sun').classList.toggle('on', next === 'light');
+      btn.querySelector('.ic-moon').classList.toggle('on', next === 'dark');
+      btn.querySelector('.theme-label').textContent = next === 'light' ? 'Light' : 'Dark';
+      btn.setAttribute('aria-label', 'Switch to ' + next + ' theme');
+      btn.setAttribute('title', 'Switch to ' + next + ' theme');
+    });
+  }
+  toggles.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var next = current() === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem('pc-theme', next); } catch(e){}
+      paint();
+    });
+  });
+  // follow the system if the reader has never chosen
+  sysDark.addEventListener('change', function(){
+    if (!root.getAttribute('data-theme')) paint();
+  });
+  paint();
+
+  /* ---- scroll progress + sticky bar ---- */
+  var bar = document.getElementById('bar');
+  var prog = document.getElementById('progress');
+  var hero = document.querySelector('.hero');
+  function onScroll(){
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    prog.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+    bar.classList.toggle('show', window.scrollY > hero.offsetHeight * 0.72);
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onScroll);
+  onScroll();
+
+  /* ---- reveal on scroll ---- */
+  var items = document.querySelectorAll('.rv');
+  if (reduce || !('IntersectionObserver' in window)) {
+    items.forEach(function(el){ el.classList.add('in'); });
+  } else {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var sibs = Array.prototype.slice.call(e.target.parentNode.querySelectorAll(':scope > .rv'));
+        e.target.style.transitionDelay = Math.min(sibs.indexOf(e.target), 3) * 90 + 'ms';
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      });
+    }, {rootMargin:'0px 0px -12% 0px', threshold:0.08});
+    items.forEach(function(el){ io.observe(el); });
+  }
+
+  /* ---- count up ---- */
+  var counter = document.getElementById('counter');
+  if (counter) {
+    var fmt = function(n){ return '$' + Math.round(n).toLocaleString('en-US'); };
+    var target = +counter.dataset.target;
+    if (reduce || !('IntersectionObserver' in window)) {
+      counter.textContent = fmt(target);
+    } else {
+      var co = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+          if (!e.isIntersecting) return;
+          co.unobserve(e.target);
+          var t0 = null, dur = 1500;
+          (function step(ts){
+            if (t0 === null) t0 = ts;
+            var p = Math.min((ts - t0) / dur, 1);
+            counter.textContent = p < 1 ? fmt(target * (1 - Math.pow(1 - p, 3))) : fmt(target);
+            if (p < 1) requestAnimationFrame(step);
+          })(performance.now());
+        });
+      }, {threshold:0.5});
+      co.observe(counter);
+    }
+  }
+
+  /* ---- lightbox ---- */
+  var lb = document.getElementById('lb');
+  var lbImg = lb.querySelector('img');
+  var lbCap = lb.querySelector('.cap');
+  var lbClose = lb.querySelector('.close');
+  var lastFocus = null;
+
+  function open(fig){
+    lastFocus = document.activeElement;
+    lbImg.src = fig.dataset.full;
+    lbImg.alt = fig.querySelector('img').alt;
+    lbCap.textContent = fig.dataset.cap || '';
+    lb.hidden = false;
+    requestAnimationFrame(function(){ lb.classList.add('on'); });
+    document.body.style.overflow = 'hidden';
+    lbClose.focus();
+  }
+  function close(){
+    lb.classList.remove('on');
+    document.body.style.overflow = '';
+    setTimeout(function(){ lb.hidden = true; lbImg.src = ''; }, 300);
+    if (lastFocus) lastFocus.focus();
+  }
+
+  document.querySelectorAll('.fig--zoom').forEach(function(fig){
+    fig.tabIndex = 0;
+    fig.setAttribute('role','button');
+    fig.setAttribute('aria-label','Enlarge: ' + (fig.dataset.cap || 'screenshot'));
+    fig.addEventListener('click', function(){ open(fig); });
+    fig.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(fig); }
+    });
+  });
+
+  lbClose.addEventListener('click', close);
+  lb.addEventListener('click', function(e){ if (e.target === lb || e.target === lbImg) close(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !lb.hidden) close(); });
+})();
+</script>
+
+</body>
+</html>

@@ -82,6 +82,8 @@
       cursor: pointer;
       opacity: 0.8;
       transition: opacity 0.2s;
+      text-decoration: none;
+      color: inherit;
     }
     
     .mobile-nav-item:hover {
@@ -356,6 +358,8 @@
       cursor: pointer;
       transition: transform 0.3s ease;
       z-index: 10;
+      text-decoration: none;
+      color: inherit;
     }
     
     .node:hover {
@@ -763,10 +767,10 @@
             <img src="i/icon-who-we-are.png" alt="Who we are" />
             <span>who we are</span>
           </div>
-          <div class="mobile-nav-item" onclick="openPanel('product')">
+          <a class="mobile-nav-item" href="powerconcrete/">
             <img src="i/icon-product.png" alt="Product" />
             <span>product</span>
-          </div>
+          </a>
           <div class="mobile-nav-item" onclick="openPanel('contact')">
             <img src="i/icon-contact-us.png" alt="Contact us" />
             <span>contact us</span>
@@ -791,7 +795,7 @@
             
             <div class="grid-col product-col" style="position: relative;">
               <div class="grid-label">product</div>
-              <div class="grid-value">Power<span style="font-weight: 500;">CONCRETE</span></div>
+              <div class="grid-value"><a href="powerconcrete/" style="text-decoration:none;color:inherit;">Power<span style="font-weight: 500;">CONCRETE</span></a></div>
               
               <!-- Mobile subtext rendering right below PowerCONCRETE -->
               <div class="mobile-subtext" style="display: none;">
@@ -886,12 +890,12 @@
           <div class="node-label">who we are?</div>
         </div>
         
-        <div class="node" id="node-product" onclick="openPanel('product')">
+        <a class="node" id="node-product" href="powerconcrete/">
           <div class="node-icon-wrapper">
             <img src="i/icon-product.png" alt="Product" />
           </div>
           <div class="node-label">product</div>
-        </div>
+        </a>
         
         <div class="node" id="node-contact" onclick="openPanel('contact')">
           <div class="node-icon-wrapper">
@@ -942,18 +946,6 @@
             <p>His experience spans AT&amp;T Labs, Oracle, Aspen Technology, Dassault Systèmes, CentralSquare Technologies, and multiple software ventures.</p>
             <p>He brings depth in product architecture, cloud systems, and deployment—ensuring that what is modeled can actually be delivered, operated, and scaled.</p>
             <p>Together, they combine cross-domain modeling with the ability to build and deploy industrial software that actually runs in production.</p>
-          </div>
-          
-          <!-- PRODUCT CONTENT -->
-          <div class="panel-content" id="panel-product">
-            <h2>Product</h2>
-            <h4>PowerCONCRETE</h4>
-            <p>Deterministic optimization for precast concrete mix design.</p>
-            <p>Computes the feasible space of concrete mixtures under real production constraints—including materials, performance, and carbon— and identifies cost-efficient solutions within that space, replacing conservative overdesign with explicit optimization.</p>
-            <br/>
-            <p>
-              <a href="https://powerconcrete.app" target="_blank" class="btn-action">Visit PowerCONCRETE</a>
-            </p>
           </div>
           
           <!-- CONTACT CONTENT -->
@@ -1045,6 +1037,14 @@
       
       document.body.style.overflow = ''; // Unlock background scrolling
     }
+    // Deep link: /?panel=contact opens a panel directly (used by the product page)
+    (function () {
+      const wanted = new URLSearchParams(window.location.search).get('panel');
+      if (wanted && document.getElementById('panel-' + wanted)) {
+        openPanel(wanted);
+      }
+    })();
+
     // Web3Forms AJAX submission
     const contactForm = document.getElementById('contact-form');
     if (contactForm) {

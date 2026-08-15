@@ -1,0 +1,11 @@
+# GitHub Pages (Jekyll) build config for mrythm.com
+#
+# Anything listed under `exclude` stays in the Git repository — where the team
+# can read it on github.com — but is NOT copied into the published site.
+# It therefore has no URL on www.mrythm.com and cannot be reached from any page.
+exclude:
+  - docs/
+  - README.dig-s
+  - README.github.page
+  - README.github.setup.md
+  - .claude/
